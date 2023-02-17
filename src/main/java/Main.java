@@ -9,7 +9,7 @@ public class Main {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 		System.out.println("Choose task: ");
-		Integer taskNumber = Integer.valueOf(br.readLine());
+		int taskNumber = Integer.parseInt(br.readLine());
 
 		if (taskNumber == 1) {
 			Task.resolveFirstTask();
