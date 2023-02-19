@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -93,36 +94,69 @@ public class Task {
 		List<List<Integer>> groupsOfVertices = new ArrayList<>();
 		List<Pair<Integer, Integer>> tmpPairs = new ArrayList<>(pairs);
 
+		// Tworzymy nowe grupy lub dołączamy parę do istniejącej jeżeli istnieje dopasowanie
 		pairs.forEach(pair -> {
-			if (tmpPairs.contains(pair)) {
-				List<Integer> groupOfVertices = new ArrayList<>(Arrays.asList(pair.getLeft(), pair.getRight()));
-				tmpPairs.remove(pair);
+			if (groupsOfVertices.isEmpty()) {
+				groupsOfVertices.add(new ArrayList<>(Arrays.asList(pair.getLeft(), pair.getRight())));
+			} else {
+				groupsOfVertices.forEach(g -> {
+					if (tmpPairs.contains(pair)) {
+						Collections.sort(g);
+						Integer leftSide = g.get(0);
+						Integer rightSide = g.get(g.size() - 1);
 
-				Pair<Integer, Integer> leftPair = searchPairForVerticle(pair.getLeft(), tmpPairs);
-				if (leftPair != null) {
-					tmpPairs.remove(leftPair);
-					groupOfVertices.add(leftPair.getLeft());
-					groupOfVertices.add(leftPair.getRight());
+						if (pair.getLeft().equals(leftSide) || pair.getLeft().equals(rightSide)) {
+							g.add(pair.getRight());
+							tmpPairs.remove(pair);
+						} else if (pair.getRight().equals(leftSide) || pair.getRight().equals(rightSide)) {
+							g.add(pair.getLeft());
+							tmpPairs.remove(pair);
+						}
+					}
+				});
+				if (tmpPairs.contains(pair)) {
+					groupsOfVertices.add(new ArrayList<>(Arrays.asList(pair.getLeft(), pair.getRight())));
 				}
-
-				Pair<Integer, Integer> rightPair = searchPairForVerticle(pair.getRight(), tmpPairs);
-				if (rightPair != null) {
-					tmpPairs.remove(rightPair);
-					groupOfVertices.add(rightPair.getLeft());
-					groupOfVertices.add(rightPair.getRight());
-				}
-
-				groupsOfVertices.add(groupOfVertices.stream().distinct().collect(Collectors.toList()));
 			}
 		});
 
+		// Łączymy grupy w przypadkach kiedy istnieją połączenia pomiędzy nimi
+		List<List<Integer>> tmpGroups = new ArrayList<>(groupsOfVertices);
+		List<List<Integer>> groupsToRemove = new ArrayList<>();
+		groupsOfVertices.forEach(group -> {
+			if (tmpGroups.contains(group)) {
+				Integer leftSide = group.get(0);
+				Integer rightSide = group.get(group.size() - 1);
+				tmpGroups.remove(group);
+				List<Integer> leftConnection = tmpGroups.stream().filter(g -> leftSide.equals(g.get(0)) || leftSide.equals(g.get(g.size() - 1))).findAny().orElse(null);
+				List<Integer> rightConnection = tmpGroups.stream().filter(g -> rightSide.equals(g.get(0)) || rightSide.equals(g.get(g.size() - 1))).findAny().orElse(null);
+
+				if (leftConnection != null) {
+					group.remove(leftSide);
+					group.addAll(leftConnection);
+					tmpGroups.remove(leftConnection);
+					groupsToRemove.add(leftConnection);
+				} else if (rightConnection != null) {
+					group.remove(rightSide);
+					group.addAll(rightConnection);
+					tmpGroups.remove(rightConnection);
+					groupsToRemove.add(rightConnection);
+				}
+			}
+		});
+		groupsOfVertices.removeAll(groupsToRemove);
+
+		// Wyświetlanie outputu
 		System.out.println("Output: ");
-		groupsOfVertices.forEach(group -> System.out.println(group.stream().map(v -> "[" + v.toString() + "]").collect(Collectors.joining("-"))));
+		groupsOfVertices.forEach(group -> System.out.println(group.stream().
+
+				map(v -> "[" + v.toString() + "]").
+
+				collect(Collectors.joining("-"))));
 	}
 
 	private static Pair<Integer, Integer> searchPairForVerticle(int verticleValue, List<Pair<Integer, Integer>> pairs) {
 		return pairs.stream().filter(p -> p.getLeft() == verticleValue || p.getRight() == verticleValue).findAny().orElse(null);
-
 	}
 
 }
