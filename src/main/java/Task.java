@@ -154,9 +154,4 @@ public class Task {
 
 				collect(Collectors.joining("-"))));
 	}
-
-	private static Pair<Integer, Integer> searchPairForVerticle(int verticleValue, List<Pair<Integer, Integer>> pairs) {
-		return pairs.stream().filter(p -> p.getLeft() == verticleValue || p.getRight() == verticleValue).findAny().orElse(null);
-	}
-
 }
